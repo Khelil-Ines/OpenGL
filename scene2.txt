@@ -1,0 +1,322 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <shader_s.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <irrKlang.h>
+#include <iostream>
+#include <cmath>
+
+using namespace irrklang;
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+
+// settings
+const unsigned int SCR_WIDTH = 871;
+const unsigned int SCR_HEIGHT = 438;
+
+int main()
+{
+    //  GLFW initialization
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    //  GLFW
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Ben and Jerry's - Ines Khelil", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // GLAD 
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+   
+    Shader ourShader("D:/Fichiers/4.1.texture.vs", "D:/Fichiers/4.1.texture.fs");
+
+    float vertices[] = {
+        // positions          // texture coords
+        // Full-width background quad
+        -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, // bottom left
+         1.0f, -1.0f, 0.0f,  1.0f, 0.0f, // bottom right
+         1.0f,  1.0f, 0.0f,  1.0f, 1.0f, // top right
+        -1.0f,  1.0f, 0.0f,  0.0f, 1.0f, // top left
+    // Top-right corner quad 
+0.60f,  1.00f, 0.1f,  0.0f, 0.0f, // top left
+0.80f,  1.00f, 0.1f,  1.0f, 0.0f, // top right
+0.80f,  0.55f, 0.1f,  1.0f, 1.0f, // bottom right
+0.60f,  0.55f, 0.1f,  0.0f, 1.0f,  // bottom left
+
+        // Tableau image quad 
+        -1.1f, -0.65f, 1.0f,  0.0f, 0.0f, // bottom left
+        -0.6f, -0.65f, 1.0f,  1.0f, 0.0f, // bottom right
+        -0.6f,  0.2f,  1.0f,  1.0f, 1.0f, // top right
+        -1.1f,  0.2f,  1.0f,  0.0f, 1.0f,  // top left
+        // Porteclef image quad
+        -0.2f, -0.95f, 0.5f,  0.0f, 0.0f, // bottom left
+         0.3f, -0.95f, 0.5f,  1.0f, 0.0f, // bottom right
+         0.3f, -0.1f, 0.5f,  1.0f, 1.0f, // top right
+        -0.2f, -0.1f, 0.5f,  0.0f, 1.0f, // top left
+        // ShopNow image quad 
+        0.15f, -0.2f, 0.6f,  0.0f, 0.0f, // bottom left
+        0.65f, -0.2f, 0.6f,  1.0f, 0.0f, // bottom right
+        0.65f,  0.4f, 0.6f,  1.0f, 1.0f, // top right
+        0.15f,  0.4f, 0.6f,  0.0f, 1.0f,  // top left
+        // Nike image quad
+        0.35f, -0.8f, 0.6f,  0.0f, 0.0f, // bottom left
+        0.85f, -0.8f, 0.6f,  1.0f, 0.0f, // bottom right
+        0.85f, -0.2f, 0.6f,  1.0f, 1.0f, // top right
+        0.35f, -0.2f, 0.6f,  0.0f, 1.0f,  // top left
+        // Order Now image quad 
+        -1.0f, -0.40f, 0.3f, 0.0f, 0.0f, // bottom left
+        -0.5f, -0.40f, 0.3f, 1.0f, 0.0f, // bottom right
+        -0.5f,  0.5f,  0.3f, 1.0f, 1.0f, // top right
+        -1.0f,  0.5f,  0.3f, 0.0f, 1.0f,  // top left
+ // Collab image quad 
+-0.5f, -0.3f, 0.4f,  0.0f, 0.0f, // bottom left
+ 0.4f, -0.3f, 0.4f,  1.0f, 0.0f, // bottom right
+ 0.4f,  0.90f, 0.4f,  1.0f, 1.0f, // top right
+-0.5f,  0.90f, 0.4f,  0.0f, 1.0f,  // top left
+
+        // Carvach image quad 
+        -1.3f, -1.2f, 0.8f, 0.0f, 0.0f, // bottom left
+         0.0f, -1.2f, 0.8f, 1.0f, 0.0f, // bottom right
+         0.0f,  0.3f, 0.8f, 1.0f, 1.0f, // top right
+        -1.3f,  0.3f, 0.8f, 0.0f, 1.0f  // top left
+    };
+
+    unsigned int indices[] = {
+        // Background quad
+        0, 1, 3, 1, 2, 3,
+        // Top-right corner quad
+        4, 5, 7, 5, 6, 7,
+        // Tableau image quad
+        8, 9, 11, 9, 10, 11,
+        // Porteclef image quad
+        12, 13, 15, 13, 14, 15,
+        // ShopNow image quad
+        16, 17, 19, 17, 18, 19,
+        // Nike image quad
+        20, 21, 23, 21, 22, 23,
+        // Order Now image quad
+        24, 25, 27, 25, 26, 27,
+        // Collab image quad
+        28, 29, 31, 29, 30, 31,
+        // Carvach image quad
+        32, 33, 35, 33, 34, 35
+    };
+
+    unsigned int VBO, VAO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // load and create textures
+    unsigned int textures[9];
+    glGenTextures(9, textures);
+
+    const char* imageFiles[9] = {
+        "D:/Fichiers/icecream4.png", // Background image
+        "D:/Fichiers/logonike.png", // Top-right corner image
+        "D:/Fichiers/tableau.png", // Tableau image
+        "D:/Fichiers/porteclef.png", // Porteclef image
+        "D:/Fichiers/shopnow.png", // Shopnow image
+        "D:/Fichiers/nike2.png",  // Nike image
+        "D:/Fichiers/ordernow.png", // Ordernow image
+        "D:/Fichiers/collab.png", // Collab image
+        "D:/Fichiers/carvach.png" // Carvach image
+    };
+
+    for (int i = 0; i < 9; i++) {
+        glBindTexture(GL_TEXTURE_2D, textures[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        int width, height, nrChannels;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* data = stbi_load(imageFiles[i], &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
+        else
+        {
+            std::cout << "Failed to load texture: " << imageFiles[i] << std::endl;
+        }
+        stbi_image_free(data);
+    }
+
+    // IrrKlang initialization
+    ISoundEngine* soundEngine = createIrrKlangDevice();
+    if (!soundEngine) {
+        std::cerr << "Échec de l'initialisation de IrrKlang" << std::endl;
+        return -1;
+    }
+
+    // Play music
+    soundEngine->play2D("D:/Fichiers/music.ogg", true);
+
+    // render loop
+    ourShader.use();
+    glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+
+    float backgroundAlpha = 0.7f; // Opacité 70%
+
+    float rotationAngle = 0.0f;
+    const float rotations = 3.0f;
+    const float rotationSpeed = glm::radians(360.0f * rotations); 
+    float startTime = (float)glfwGetTime();
+
+    while (!glfwWindowShouldClose(window))
+    {
+        // input
+        processInput(window);
+
+        // render
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindVertexArray(VAO);
+
+        // Render background without transformation
+        glUniform1i(glGetUniformLocation(ourShader.ID, "applyTransform"), GL_FALSE);
+        glUniform1f(glGetUniformLocation(ourShader.ID, "alpha"), backgroundAlpha);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures[0]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // Reset alpha value to 1.0 for other textures
+        glUniform1f(glGetUniformLocation(ourShader.ID, "alpha"), 1.0f);
+
+        // Render top-right corner with rotation
+        glUniform1i(glGetUniformLocation(ourShader.ID, "applyTransform"), GL_TRUE);
+        glBindTexture(GL_TEXTURE_2D, textures[1]);
+
+        float currentTime = (float)glfwGetTime();
+        float elapsedTime = currentTime - startTime;
+
+        glm::mat4 transform = glm::mat4(1.0f);
+
+        if (elapsedTime <= rotations) {
+            rotationAngle = rotationSpeed * elapsedTime;
+        }
+        else {
+            rotationAngle = glm::radians(180.0f); // 180 degrees to flip upside down
+        }
+
+        transform = glm::translate(transform, glm::vec3(0.75f, 0.75f, 0.0f)); // Translate to the top-right corner
+        transform = glm::rotate(transform, rotationAngle, glm::vec3(0.0f, 0.0f, 1.0f));
+        transform = glm::translate(transform, glm::vec3(-0.75f, -0.75f, 0.0f)); // Translate back
+
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(6 * sizeof(unsigned int)));
+
+        // Render carvach image with depth translation and scaling
+        glUniform1i(glGetUniformLocation(ourShader.ID, "applyTransform"), GL_TRUE);
+        glBindTexture(GL_TEXTURE_2D, textures[8]);
+
+        // Apply a translation in depth and scaling
+        transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.0f, -0.5f, sin(elapsedTime) * 0.5f)); 
+        float scaleValue = 1.0f + sin(elapsedTime) * 0.5f; // Scaling value
+        transform = glm::scale(transform, glm::vec3(scaleValue, scaleValue, 1.0f)); // Apply scaling
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(48 * sizeof(unsigned int)));
+
+        // Render tableau image without transformation 
+        glUniform1i(glGetUniformLocation(ourShader.ID, "applyTransform"), GL_FALSE);
+        glBindTexture(GL_TEXTURE_2D, textures[2]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(12 * sizeof(unsigned int)));
+
+        // Render the remaining images without transformation
+        glBindTexture(GL_TEXTURE_2D, textures[3]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(18 * sizeof(unsigned int)));
+
+        glBindTexture(GL_TEXTURE_2D, textures[4]);
+
+        // Apply blinking effect to shopnow.png
+        float blinkAlpha = (sin(currentTime * 5.0f) + 1.0f) / 2.0f; 
+        glUniform1f(glGetUniformLocation(ourShader.ID, "alpha"), blinkAlpha);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(24 * sizeof(unsigned int)));
+
+        glUniform1f(glGetUniformLocation(ourShader.ID, "alpha"), 1.0f); // reset alpha to 1.0 for other textures
+        glBindTexture(GL_TEXTURE_2D, textures[5]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(30 * sizeof(unsigned int)));
+
+        glBindTexture(GL_TEXTURE_2D, textures[6]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(36 * sizeof(unsigned int)));
+
+        glBindTexture(GL_TEXTURE_2D, textures[7]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(42 * sizeof(unsigned int)));
+
+        // glfw: swap buffers and poll IO events
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+   
+    soundEngine->drop(); // Nettoyage d'IrrKlang
+
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+
+    glfwTerminate();
+    return 0;
+}
+
+// Process all input
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+// GLFW callback when the window size changes
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
